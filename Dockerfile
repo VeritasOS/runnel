@@ -9,14 +9,14 @@ RUN apt-get install -y redis-server iputils-ping
 
 
 # New user for runnel
-RUN useradd -ms /bin/bash runnel
+# RUN useradd -ms /bin/bash runnel
 
 # Copy runnel server
 COPY bin/linux_64/runnel_server /home/runnel/runnel_server
 
 # Change user to runnel
-RUN chown -R runnel:runnel /home/runnel
-USER runnel
+# RUN chown -R runnel:runnel /home/runnel
+# USER runnel
 
 # Run runnel and redis
 EXPOSE 9090
