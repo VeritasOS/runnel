@@ -1,7 +1,8 @@
 package runnel
 
 import (
-	"errors"
+	"fmt"
+	"log"
 	"time"
 )
 
@@ -9,7 +10,7 @@ import (
 func (run *Runnel) Stream(key string, timeout int) (string, error) {
 
 	if key == "" {
-		return "", errors.New("Empty key")
+		return "", fmt.Errorf("Empty key")
 	}
 
 	if timeout == 0 {
@@ -21,8 +22,10 @@ func (run *Runnel) Stream(key string, timeout int) (string, error) {
 		key).Result()
 
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("Key store %s not found or empty", key)
 	}
 
+	log.Println(val[1])
 	return val[1], nil
 }

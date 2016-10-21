@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"io"
+	"log"
 	"os/exec"
 )
 
 // RunCommand ...
 func (run *Runnel) RunCommand(executable string,
-	args []string) (string, error) {
+	args []string, cwd string) (string, error) {
 	key := uuid.NewV4()
 
 	// Redirect command output to buffer
-	buf, err := run.Buffer(executable, args)
+	buf, err := run.Buffer(executable, args, cwd)
 	if err != nil {
 		return "", err
 	}
@@ -28,13 +29,18 @@ func (run *Runnel) RunCommand(executable string,
 
 // Buffer will hold command output
 func (run *Runnel) Buffer(executable string,
-	args []string) (*bufio.Scanner, error) {
+	args []string, cwd string) (*bufio.Scanner, error) {
 
 	if executable == "" {
 		return nil, errors.New("Command executable required")
 	}
 
 	command := exec.Command(executable, args...)
+
+	if cwd != "" {
+		command.Dir = cwd
+	}
+	log.Printf("Executing command %s:%s %s", command.Dir, executable, args)
 
 	// Get stdout and stderr
 	stdout, err := command.StdoutPipe()
@@ -59,16 +65,17 @@ func (run *Runnel) Buffer(executable string,
 // BufferSave to redis
 func (run *Runnel) BufferSave(key string, buffer *bufio.Scanner) string {
 
+	log.Println("Pushing to redis store", key)
+
 	for buffer.Scan() {
-		// fmt.Printf("%s\n", in.Text()) // write each line to your log, or anything you need
+		log.Println(buffer.Text())
 		if err := run.Redis.LPush(key, buffer.Text()).Err(); err != nil {
 			fmt.Println(err)
 		}
 	}
 
 	if err := buffer.Err(); err != nil {
-		// fmt.Printf("error: %s", err)
-
+		log.Println(err)
 		if err := run.Redis.LPush(key, err).Err(); err != nil {
 			fmt.Println(err)
 		}

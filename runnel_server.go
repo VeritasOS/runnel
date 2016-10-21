@@ -19,6 +19,7 @@ type JSONResponse struct {
 // Application command from user
 type Application struct {
 	Cmd string `json:"cmd"`
+	Cwd string `json:"cwd"`
 }
 
 func command(res http.ResponseWriter, req *http.Request) {
@@ -36,8 +37,8 @@ func command(res http.ResponseWriter, req *http.Request) {
 
 	client := runnel.NewClient()
 	key, err := client.RunCommand(
-		executableAndArgs[0],
-		executableAndArgs[1:])
+		executableAndArgs[0], executableAndArgs[1:],
+		app.Cwd)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -98,10 +99,11 @@ func main() {
 		log.Fatal("Provide ip address and port, '-p ip:port'")
 	}
 
+	log.Println("Started Runnel Server on", *ip)
+
 	router := mux.NewRouter()
 	router.HandleFunc("/", home).Methods("GET")
 	router.HandleFunc("/command", command).Methods("POST")
 	router.HandleFunc("/stream/{key}", stream).Methods("GET")
 	http.ListenAndServe(*ip, router)
-
 }
